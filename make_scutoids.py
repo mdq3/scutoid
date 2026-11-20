@@ -7,7 +7,8 @@
   - two or four 5-6 fitted together, flipped (as in Wikipedia's picture),
   - two or four 6-7 fitted together the same way.
 
-  python3 make_scutoids.py [OUT_DIR]   writes scutoid_5-6.stl, scutoid_6-7.stl
+  python3 make_scutoids.py [OUT_DIR]   writes scutoid_5-6.stl, scutoid_6-7.stl,
+                                       and copies them into viewer.html there
 
 Shape. The top of a layer is a honeycomb of one slightly squashed hexagon.
 In each group of four, the edge between the two 5-6 pieces (P-Q) shrinks
@@ -30,8 +31,11 @@ junction: two upright, two turned over.
 Flat space can't be filled with 5-6 scutoids alone: a flat tiling's cells
 average exactly six sides, so pentagons need heptagons to balance them.
 """
+import base64
+import json
 import math
 import random
+import re
 import struct
 import sys
 from pathlib import Path
@@ -224,9 +228,12 @@ def recentre(tris, centre):
     return [tuple((p[0] - centre[0], p[1] - centre[1], p[2]) for p in tri) for tri in tris]
 
 
-def write_stl(path, tris, name):
+def write_stl(path, tris, header):
+    """Binary STL. The 80-byte header holds `header` (ASCII, at most 80)."""
+    data = header.encode("ascii")
+    assert len(data) <= 80, header
     with open(path, "wb") as f:
-        f.write(name.encode().ljust(80, b" ")[:80])
+        f.write(data.ljust(80, b" "))
         f.write(struct.pack("<I", len(tris)))
         for p0, p1, p2 in tris:
             n = cross(sub(p1, p0), sub(p2, p0))
@@ -278,8 +285,30 @@ def main():
     for name, piece, centre in (("scutoid_5-6", f, A_CENTRE), ("scutoid_6-7", g, C_CENTRE)):
         part = recentre(shrink(piece, centre, GAP), centre)
         check_closed(part, name)
-        write_stl(out / f"{name}.stl", part, name)
+        # where the piece sits in its group of four (the junction at x = y = 0),
+        # for viewer.html, which puts it back there
+        header = f"{name} centre={centre[0]:g},{centre[1]:g}"
+        write_stl(out / f"{name}.stl", part, header)
         print(f"wrote {out / (name + '.stl')}")
+    embed_in_viewer(out)
+
+
+def embed_in_viewer(out):
+    """Copy the STLs into the viewer.html beside them (if there is one): a
+    page opened from disk can't read the files next to it."""
+    viewer = out / "viewer.html"
+    if not viewer.exists():
+        return
+    stls = {name: base64.b64encode((out / name).read_bytes()).decode("ascii")
+            for name in ("scutoid_5-6.stl", "scutoid_6-7.stl")}
+    data = json.dumps(stls, indent=1)
+    html = viewer.read_text()
+    new, n = re.subn(r'(<script id="stls" type="application/json">\n).*?(\n</script>)',
+                     lambda m: m.group(1) + data + m.group(2), html, flags=re.S)
+    if n != 1:
+        sys.exit(f"{viewer}: no <script id=\"stls\"> block to copy the STLs into")
+    viewer.write_text(new)
+    print(f"copied them into {viewer}")
 
 
 if __name__ == "__main__":

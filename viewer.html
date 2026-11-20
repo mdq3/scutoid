@@ -1,35 +1,226 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Scutoids</title>
-<style>body{margin:0;background:#111;color:#eee;font:14px sans-serif}#ui{position:fixed;top:10px;left:10px}</style>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Scutoids</title>
+<style>
+  body { margin: 0; background: #111; color: #eee; font: 14px sans-serif; overflow: hidden; }
+  #ui { position: fixed; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center; }
+  #load { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
+  #load.show { display: flex; }
+  #drop { border: 2px dashed #777; border-radius: 12px; padding: 32px 40px; text-align: center;
+          max-width: 420px; line-height: 1.5; background: #1a1a1a; }
+  #drop.over { border-color: #e98bb5; }
+  #drop p { margin: 0 0 14px; }
+  #error { color: #f99; min-height: 1.5em; }
+</style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
-</head><body><div id="ui"><select id="mode"><option value="layer">layer (some groups turned over)</option><option value="f4">four 5-6</option><option value="g4">four 6-7</option></select>
-apart <input id="ex" type="range" min="0" max="1" step="0.01" value="0"></div>
+</head>
+<body>
+<div id="ui">
+  <select id="mode">
+    <option value="layer">layer (some groups turned over)</option>
+    <option value="group">group of four (two 5-6, two 6-7)</option>
+    <option value="f4">four 5-6</option>
+    <option value="g4">four 6-7</option>
+  </select>
+  apart <input id="ex" type="range" min="0" max="1" step="0.01" value="0">
+</div>
+<div id="load">
+  <div id="drop">
+    <p>Choose or drop <b>scutoid_5-6.stl</b> and <b>scutoid_6-7.stl</b>.</p>
+    <p>(They aren't copied into this page: run <code>make_scutoids.py</code>
+    to copy them in.)</p>
+    <input id="pick" type="file" accept=".stl" multiple>
+    <p id="error"></p>
+  </div>
+</div>
+<!-- the STLs, copied in by make_scutoids.py each time it writes them
+     (base64; a page opened from disk can't read the files beside it) -->
+<script id="stls" type="application/json">
+{
+ "scutoid_5-6.stl": "c2N1dG9pZF81LTYgY2VudHJlPTEzLjUsMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAUAAAADGTPPukOaj8AAAAA6+ZVQT6r7UAAAAAAAAAAAJqZVUEAAAAAAAAAAJqZVUEAACBCAAAMZM8+6Q5qPwAAAIDr5lVBPqvtQAAAAAAAAAAAmplVQQAAIELr5lVBPqvtQAAAIEIAAHnCXb/lWcI+2lGmvgAAAACamVVBAAAAADMzu8CamXkmAAAAAJqZVcEAAAAAAACgQQAA8wQ1v/MENT8AAAAAAAAAAJqZVUEAAAAAmplVwQAAAAAAAKBBAAAAAJqZVUEAACBCAAB4W8S+IptdP4fGpL6amVXBAAAAAAAAoEHr5lXBPqvtQAAAIEIAAAAAmplVQQAAIEIAAPn/f78AAAAAsGp3upqZVcEAAAAAAACgQevmVcE+q+3AAAAgQuvmVcE+q+1AAAAgQgAAecJdv+VZwr7aUaa+MzO7wJqZeSYAAAAAAAAAAJqZVcEAAAAAmplVwQAAAAAAAKBBAADzBDW/8wQ1vwAAAAAAAAAAmplVwQAAAAAAAAAAmplVwQAAIEKamVXBAAAAAAAAoEEAAHhbxL4im12/h8akvgAAAACamVXBAAAgQuvmVcE+q+3AAAAgQpqZVcEAAAAAAACgQQAADGTPPukOar8AAAAAAAAAAJqZVcEAAAAA6+ZVQT6r7cAAAAAA6+ZVQT6r7cAAACBCAAAMZM8+6Q5qvwAAAAAAAAAAmplVwQAAAADr5lVBPqvtwAAAIEIAAAAAmplVwQAAIEIAAAAAgD8AAAAAAAAAAOvmVUE+q+3AAAAAAOvmVUE+q+1AAAAAAOvmVUE+q+1AAAAgQgAAAACAPwAAAAAAAAAA6+ZVQT6r7cAAAAAA6+ZVQT6r7UAAACBC6+ZVQT6r7cAAACBCAAAAAAAAAAAAAAAAgD/r5lVBPqvtQAAAIEIAAAAAmplVQQAAIELr5lXBPqvtQAAAIEIAAAAAAAAAAAAAAACAP+vmVUE+q+1AAAAgQuvmVcE+q+1AAAAgQuvmVcE+q+3AAAAgQgAAAAAAAAAAAAAAAIA/6+ZVQT6r7UAAACBC6+ZVwT6r7cAAACBCAAAAAJqZVcEAACBCAAAAAAAAAAAAAAAAgD/r5lVBPqvtQAAAIEIAAAAAmplVwQAAIELr5lVBPqvtwAAAIEIAAAAAAIAAAAAAAACAv+vmVUE+q+1AAAAAADMzu8CamXkmAAAAAAAAAACamVVBAAAAAAAAAAAAAAAAAAAAAIC/6+ZVQT6r7UAAAAAAAAAAAJqZVcEAAAAAMzO7wJqZeSYAAAAAAAAAAAAAAAAAgAAAgL/r5lVBPqvtQAAAAADr5lVBPqvtwAAAAAAAAAAAmplVwQAAAAAAAA==",
+ "scutoid_6-7.stl": "c2N1dG9pZF82LTcgY2VudHJlPTAsMjEgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAYAAAAyLhdPy9tw74WQqU+6+ZVQT6r7cAAAAAAAAAAAM3MpsEAAKBBtmLuQLLepsEAAAAAAAA1YjU/gac0vwAAAADr5lVBPqvtwAAAAADr5lVBPqvtwAAAIEIAAAAAzcymwQAAoEEAAC8uxD4GaF2/BA6mPgAAAADNzKbBAACgQevmVUE+q+3AAAAgQgAAAACamVXBAAAgQgAAAACAPwAAAAAAAAAA6+ZVQT6r7cAAAAAA6+ZVQT6r7UAAAAAA6+ZVQT6r7UAAACBCAAAAAIA/AAAAAAAAAADr5lVBPqvtwAAAAADr5lVBPqvtQAAAIELr5lVBPqvtwAAAIEIAAAxkzz7pDmo/AAAAAOvmVUE+q+1AAAAAAAAAAACamVVBAAAAAAAAAACamVVBAAAgQgAADGTPPukOaj8AAACA6+ZVQT6r7UAAAAAAAAAAAJqZVUEAACBC6+ZVQT6r7UAAACBCAAAMZM++6Q5qPwAAAAAAAAAAmplVQQAAAADr5lXBPqvtQAAAAADr5lXBPqvtQAAAIEIAAAxkz77pDmo/AAAAAAAAAACamVVBAAAAAOvmVcE+q+1AAAAgQgAAAACamVVBAAAgQgAAAACAvwAAAAAAAAAA6+ZVwT6r7UAAAAAA6+ZVwT6r7cAAAAAA6+ZVwT6r7cAAACBCAAAAAIC/AAAAAAAAAADr5lXBPqvtQAAAAADr5lXBPqvtwAAAIELr5lXBPqvtQAAAIEIAAMi4Xb8vbcO+FkKlPrZi7sCy3qbBAAAAAAAAAADNzKbBAACgQevmVcE+q+3AAAAAAAAANWI1v4GnNL8AAAAA6+ZVwT6r7cAAAAAAAAAAAM3MpsEAAKBB6+ZVwT6r7cAAACBCAAAvLsS+BmhdvwQOpj7r5lXBPqvtwAAAIEIAAAAAzcymwQAAoEEAAAAAmplVwQAAIEIAAAAAAAD+/3+/ghTlObZi7sCy3qbBAAAAALZi7kCy3qbBAAAAAAAAAADNzKbBAACgQQAAAAAAAAAAAAAAAIA/AAAAAJqZVcEAACBC6+ZVQT6r7cAAACBC6+ZVQT6r7UAAACBCAAAAAAAAAAAAAAAAgD8AAAAAmplVwQAAIELr5lVBPqvtQAAAIEIAAAAAmplVQQAAIEIAAAAAAAAAAACAAACAPwAAAACamVXBAAAgQgAAAACamVVBAAAgQuvmVcE+q+1AAAAgQgAAAAAAAAAAAAAAAIA/AAAAAJqZVcEAACBC6+ZVwT6r7UAAACBC6+ZVwT6r7cAAACBCAAAAAAAAAAAAAAAAgL+2Yu7Ast6mwQAAAADr5lVBPqvtwAAAAAC2Yu5Ast6mwQAAAAAAAAAAAAAAAAAAAACAv7Zi7sCy3qbBAAAAAOvmVUE+q+1AAAAAAOvmVUE+q+3AAAAAAAAAAAAAAAAAAAAAAIC/tmLuwLLepsEAAAAAAAAAAJqZVUEAAAAA6+ZVQT6r7UAAAAAAAAAAAAAAAAAAAAAAgL+2Yu7Ast6mwQAAAADr5lXBPqvtQAAAAAAAAAAAmplVQQAAAAAAAAAAAAAAAAAAAACAv7Zi7sCy3qbBAAAAAOvmVcE+q+3AAAAAAOvmVcE+q+1AAAAAAAAA"
+}
+</script>
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-const G={"f": [[[27.0, 7.5, 0.0], [13.5, 13.5, 0.0], [13.5, 13.5, 40.0]], [[27.0, 7.5, 0.0], [13.5, 13.5, 40.0], [27.0, 7.5, 40.0]], [[13.5, 13.5, 0.0], [7.500000000000001, 8.881784197001252e-16, 0.0], [0.0, 0.0, 20.0]], [[13.5, 13.5, 0.0], [0.0, 0.0, 20.0], [13.5, 13.5, 40.0]], [[0.0, 0.0, 20.0], [0.0, 7.5, 40.0], [13.5, 13.5, 40.0]], [[0.0, 0.0, 20.0], [0.0, -7.5, 40.0], [0.0, 7.5, 40.0]], [[7.500000000000001, 8.881784197001252e-16, 0.0], [13.5, -13.5, 0.0], [0.0, 0.0, 20.0]], [[13.5, -13.5, 0.0], [13.5, -13.5, 40.0], [0.0, 0.0, 20.0]], [[13.5, -13.5, 40.0], [0.0, -7.5, 40.0], [0.0, 0.0, 20.0]], [[13.5, -13.5, 0.0], [27.0, -7.5, 0.0], [27.0, -7.5, 40.0]], [[13.5, -13.5, 0.0], [27.0, -7.5, 40.0], [13.5, -13.5, 40.0]], [[27.0, -7.5, 0.0], [27.0, 7.5, 0.0], [27.0, 7.5, 40.0]], [[27.0, -7.5, 0.0], [27.0, 7.5, 40.0], [27.0, -7.5, 40.0]], [[27.0, 7.5, 40.0], [13.5, 13.5, 40.0], [0.0, 7.5, 40.0]], [[27.0, 7.5, 40.0], [0.0, 7.5, 40.0], [0.0, -7.5, 40.0]], [[27.0, 7.5, 40.0], [0.0, -7.5, 40.0], [13.5, -13.5, 40.0]], [[27.0, 7.5, 40.0], [13.5, -13.5, 40.0], [27.0, -7.5, 40.0]], [[27.0, 7.5, 0.0], [7.500000000000001, 8.881784197001252e-16, 0.0], [13.5, 13.5, 0.0]], [[27.0, 7.5, 0.0], [13.5, -13.5, 0.0], [7.500000000000001, 8.881784197001252e-16, 0.0]], [[27.0, 7.5, 0.0], [27.0, -7.5, 0.0], [13.5, -13.5, 0.0]]], "g": [[[13.5, 13.5, 0.0], [0, 0, 20.0], [7.500000000000001, 8.881784197001252e-16, 0.0]], [[13.5, 13.5, 0.0], [13.5, 13.5, 40.0], [0, 0, 20.0]], [[0, 0, 20.0], [13.5, 13.5, 40.0], [0.0, 7.5, 40.0]], [[13.5, 13.5, 0.0], [13.5, 28.5, 0.0], [13.5, 28.5, 40.0]], [[13.5, 13.5, 0.0], [13.5, 28.5, 40.0], [13.5, 13.5, 40.0]], [[13.5, 28.5, 0.0], [0.0, 34.5, 0.0], [0.0, 34.5, 40.0]], [[13.5, 28.5, 0.0], [0.0, 34.5, 40.0], [13.5, 28.5, 40.0]], [[0.0, 34.5, 0.0], [-13.5, 28.5, 0.0], [-13.5, 28.5, 40.0]], [[0.0, 34.5, 0.0], [-13.5, 28.5, 40.0], [0.0, 34.5, 40.0]], [[-13.5, 28.5, 0.0], [-13.5, 13.5, 0.0], [-13.5, 13.5, 40.0]], [[-13.5, 28.5, 0.0], [-13.5, 13.5, 40.0], [-13.5, 28.5, 40.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [0, 0, 20.0], [-13.5, 13.5, 0.0]], [[-13.5, 13.5, 0.0], [0, 0, 20.0], [-13.5, 13.5, 40.0]], [[-13.5, 13.5, 40.0], [0, 0, 20.0], [0.0, 7.5, 40.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [7.500000000000001, 8.881784197001252e-16, 0.0], [0, 0, 20.0]], [[0.0, 7.5, 40.0], [13.5, 13.5, 40.0], [13.5, 28.5, 40.0]], [[0.0, 7.5, 40.0], [13.5, 28.5, 40.0], [0.0, 34.5, 40.0]], [[0.0, 7.5, 40.0], [0.0, 34.5, 40.0], [-13.5, 28.5, 40.0]], [[0.0, 7.5, 40.0], [-13.5, 28.5, 40.0], [-13.5, 13.5, 40.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [13.5, 13.5, 0.0], [7.500000000000001, 8.881784197001252e-16, 0.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [13.5, 28.5, 0.0], [13.5, 13.5, 0.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [0.0, 34.5, 0.0], [13.5, 28.5, 0.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [-13.5, 28.5, 0.0], [0.0, 34.5, 0.0]], [[-7.500000000000001, -8.881784197001252e-16, 0.0], [-13.5, 13.5, 0.0], [-13.5, 28.5, 0.0]]], "D": 13.5, "Hh": 7.5, "H": 40.0, "u": [0.7071067811865476, 0.7071067811865476]};const H=G.H,u=G.u;
-const r=new THREE.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);document.body.appendChild(r.domElement);
-const s=new THREE.Scene();s.background=new THREE.Color(0x111111);
-const cam=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,1,5000);cam.up.set(0,0,1);
-const oc=new OrbitControls(cam,r.domElement);
-s.add(new THREE.HemisphereLight(0xffffff,0x334,1.2));const dl=new THREE.DirectionalLight(0xffffff,1.5);dl.position.set(-1,-2,3);s.add(dl);
+
+// --- reading the STLs ---------------------------------------------------
+// make_scutoids.py writes binary STLs whose header says which piece it is and
+// where it sits in its group of four, e.g. "scutoid_5-6 centre=13.5,0"; the
+// triangles are stored round the piece's own axis.
+
+function parseStl(buf) {
+  const head = new TextDecoder().decode(new Uint8Array(buf, 0, Math.min(80, buf.byteLength)));
+  const dv = new DataView(buf);
+  const count = buf.byteLength >= 84 ? dv.getUint32(80, true) : 0;
+  let pos;
+  if (buf.byteLength === 84 + count * 50) {
+    pos = new Float32Array(count * 9);
+    for (let i = 0; i < count; i++)
+      for (let k = 0; k < 9; k++) pos[i * 9 + k] = dv.getFloat32(84 + i * 50 + 12 + k * 4, true);
+  } else {
+    const text = new TextDecoder().decode(buf);
+    const nums = [...text.matchAll(/vertex\s+(\S+)\s+(\S+)\s+(\S+)/g)].flatMap(m => m.slice(1).map(Number));
+    if (!nums.length) throw new Error('not an STL file');
+    pos = new Float32Array(nums);
+  }
+  const name = (head.match(/scutoid_(5-6|6-7)/) || [])[1];
+  const c = head.match(/centre=([-\d.e]+),([-\d.e]+)/);
+  return {name, centre: c ? [+c[1], +c[2]] : null, pos};
+}
+
+function addPiece(pieces, buf, fileName) {
+  const p = parseStl(buf);
+  const name = p.name || (fileName.match(/5-6|6-7/) || [])[0];
+  if (!name) throw new Error(`${fileName}: can't tell whether it's the 5-6 or the 6-7`);
+  if (!p.centre) throw new Error(`${fileName}: no placement in its header — regenerate it with make_scutoids.py`);
+  pieces[name] = p;
+}
+
+async function loadPieces() {
+  const pieces = {};
+  const embedded = JSON.parse(document.getElementById('stls').textContent);
+  for (const f of ['scutoid_5-6.stl', 'scutoid_6-7.stl']) {
+    if (embedded[f]) {
+      addPiece(pieces, Uint8Array.from(atob(embedded[f]), ch => ch.charCodeAt(0)).buffer, f);
+      continue;
+    }
+    // not copied in: read the file itself (only works when served)
+    const r = await fetch(f);
+    if (!r.ok) throw new Error(`${f}: ${r.status}`);
+    addPiece(pieces, await r.arrayBuffer(), f);
+  }
+  return pieces;
+}
+
+const load = document.getElementById('load'), drop = document.getElementById('drop');
+const error = document.getElementById('error'), pick = document.getElementById('pick');
+let picked = {};
+async function takeFiles(files) {
+  error.textContent = '';
+  try {
+    for (const f of files) addPiece(picked, await f.arrayBuffer(), f.name);
+  } catch (e) { error.textContent = e.message; return; }
+  const missing = ['5-6', '6-7'].filter(n => !picked[n]);
+  if (missing.length) { error.textContent = `Still need scutoid_${missing[0]}.stl`; return; }
+  load.classList.remove('show');
+  start(picked);
+}
+pick.onchange = () => takeFiles(pick.files);
+addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+addEventListener('dragleave', () => drop.classList.remove('over'));
+addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); takeFiles(e.dataTransfer.files); });
+
+// --- the scene --------------------------------------------------------------
+
+const r = new THREE.WebGLRenderer({antialias: true});
+r.setSize(innerWidth, innerHeight);
+document.body.appendChild(r.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 1, 5000);
+cam.up.set(0, 0, 1);
+const oc = new OrbitControls(cam, r.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+sun.position.set(-1, -2, 3);
+scene.add(sun);
+addEventListener('resize', () => {
+  cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight);
+});
+(function frame() { requestAnimationFrame(frame); r.render(scene, cam); })();
+
 // 5-6 pink, 6-7 blue; turned-over pieces a darker shade
-const geo={};for(const k of ['f','g']){const a=[];for(const tr of G[k])for(const v of tr)a.push(...v);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a,3));g.computeBoundingBox();geo[k]=g}
-const col={f:[0xe98bb5,0xb0587f],g:[0xa9c4ec,0x6f8fc0]};
-const up=p=>[-p[0],-p[1],p[2]], flip=p=>{const d=p[0]*u[0]+p[1]*u[1];return[2*d*u[0]-p[0],2*d*u[1]-p[1],H-p[2]]}, fg=p=>[-p[0],p[1],H-p[2]];
-const mat=f=>{const e=[f([1,0,0]),f([0,1,0]),f([0,0,1])],o=f([0,0,0]);const m=new THREE.Matrix4();m.set(e[0][0]-o[0],e[1][0]-o[0],e[2][0]-o[0],o[0],e[0][1]-o[1],e[1][1]-o[1],e[2][1]-o[1],o[1],e[0][2]-o[2],e[1][2]-o[2],e[2][2]-o[2],o[2],0,0,0,1);return m};
-let items=[];
-function add(k,f,turned){const m=new THREE.Mesh(geo[k],new THREE.MeshStandardMaterial({color:col[k][turned?1:0],flatShading:true,side:THREE.DoubleSide}));
- m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo[k],1),new THREE.LineBasicMaterial({color:0x222222})));
- m.matrixAutoUpdate=false;const M=mat(f);m.userData.M=M;const c=new THREE.Vector3();geo[k].boundingBox.getCenter(c);c.applyMatrix4(M);c.z=0;m.userData.c=c;s.add(m);items.push(m)}
-function build(){for(const m of items)s.remove(m);items=[];const mode=sel.value;const id=p=>p;
- if(mode=='layer'){const a=[G.D,G.D+G.Hh];let n=0;for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){if(Math.abs(i+j)>2)continue;const dx=2*a[0]*(i-j),dy=2*a[1]*(i+j);const t=(i+j)%2!=0;n++;
-  const sh=f=>p=>{const q=f(p);return[q[0]+dx,q[1]+dy,q[2]]};const T=t?(f=>p=>f(fg(p))):(f=>f);
-  add('f',sh(T(id)),t);add('f',sh(T(up)),t);add('g',sh(T(id)),t);add('g',sh(T(up)),t)}
-  cam.position.set(-150,-260,260);oc.target.set(0,0,20)}
- else{const k=mode=='f4'?'f':'g';add(k,id,0);add(k,up,0);add(k,flip,1);add(k,p=>up(flip(p)),1);cam.position.set(-110,-140,110);oc.target.set(0,mode=='g4'?20:0,20)}
- oc.update();place()}
-function place(){const e=ex.value;const ctr=new THREE.Vector3();for(const m of items)ctr.add(m.userData.c);ctr.divideScalar(items.length);
- for(const m of items){const d=m.userData.c.clone().sub(ctr).multiplyScalar(e*0.5);m.matrix.copy(m.userData.M).premultiply(new THREE.Matrix4().makeTranslation(d.x,d.y,0))}}
-const sel=document.getElementById('mode');sel.onchange=build;ex.oninput=place;build();
-(function a(){requestAnimationFrame(a);r.render(s,cam)})();
-</script></body></html>
+const COLOURS = {'5-6': [0xe98bb5, 0xb0587f], '6-7': [0xa9c4ec, 0x6f8fc0]};
+const sel = document.getElementById('mode'), ex = document.getElementById('ex');
+let P, H, items = [];
+
+function start(pieces) {
+  P = pieces;
+  H = 0;
+  for (const n in P) for (let i = 2; i < P[n].pos.length; i += 3) H = Math.max(H, P[n].pos[i]);
+  sel.onchange = build;
+  ex.oninput = place;
+  // settings from the address, e.g. viewer.html?mode=group&apart=0.8&ui=0
+  // (mode: layer, group, f4, g4; cam=x,y,z places the camera)
+  const q = new URLSearchParams(location.search);
+  if (q.get('mode')) sel.value = q.get('mode');
+  if (q.get('apart')) ex.value = q.get('apart');
+  if (q.get('ui') === '0') document.getElementById('ui').style.display = 'none';
+  build();
+  if (q.get('cam')) { cam.position.set(...q.get('cam').split(',').map(Number)); oc.update(); }
+}
+
+// moves about the junction (x = y = 0, half way up); all are rotations
+const upright = p => [-p[0], -p[1], p[2]];                // half a turn about the upright
+const flip = p => [p[1], p[0], H - p[2]];                 // about the 45-degree line to V
+const flipGroup = p => [-p[0], p[1], H - p[2]];           // a whole group, about its long axis
+
+function add(name, move, turned) {
+  const src = P[name], c = src.centre, pos = new Float32Array(src.pos.length);
+  for (let i = 0; i < pos.length; i += 3) {
+    const q = move([src.pos[i] + c[0], src.pos[i + 1] + c[1], src.pos[i + 2]]);
+    pos.set(q, i);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  g.computeBoundingBox();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial(
+    {color: COLOURS[name][turned ? 1 : 0], flatShading: true, side: THREE.DoubleSide}));
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 1), new THREE.LineBasicMaterial({color: 0x222222})));
+  const centre = new THREE.Vector3();
+  g.boundingBox.getCenter(centre);
+  centre.z = 0;
+  m.userData.centre = centre;
+  scene.add(m);
+  items.push(m);
+}
+
+function build() {
+  for (const m of items) { scene.remove(m); m.geometry.dispose(); }
+  items = [];
+  const id = p => p;
+  if (sel.value === 'layer') {
+    // groups of four on a lattice; (a) is from the 5-6's centre to the 6-7's
+    const a = [P['5-6'].centre[0], P['6-7'].centre[1]];
+    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+      if (Math.abs(i + j) > 2) continue;
+      const dx = 2 * a[0] * (i - j), dy = 2 * a[1] * (i + j), turned = (i + j) % 2 !== 0;
+      const at = f => p => { const q = f(turned ? flipGroup(p) : p); return [q[0] + dx, q[1] + dy, q[2]]; };
+      for (const n of ['5-6', '6-7']) { add(n, at(id), turned); add(n, at(upright), turned); }
+    }
+    cam.position.set(-150, -260, 260);
+  } else if (sel.value === 'group') {
+    add('5-6', id, false);
+    add('5-6', upright, false);
+    add('6-7', id, false);
+    add('6-7', upright, false);
+    cam.position.set(-110, -140, 110);
+  } else {
+    const n = sel.value === 'f4' ? '5-6' : '6-7';
+    add(n, id, false);
+    add(n, upright, false);
+    add(n, flip, true);
+    add(n, p => upright(flip(p)), true);
+    cam.position.set(-110, -140, 110);
+  }
+  oc.target.set(0, 0, H / 2);
+  oc.update();
+  place();
+}
+
+function place() {
+  const mid = new THREE.Vector3();
+  for (const m of items) mid.add(m.userData.centre);
+  mid.divideScalar(items.length);
+  for (const m of items) m.position.copy(m.userData.centre).sub(mid).multiplyScalar(ex.value * 0.5);
+}
+
+loadPieces().then(start, () => load.classList.add('show'));
+</script>
+</body>
+</html>
