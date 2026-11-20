@@ -1,100 +1,69 @@
 #!/usr/bin/env python3
-"""Space-filling scutoids for 3D printing.
+"""A 5-6 and a 6-7 scutoid for 3D printing, which together do everything:
 
-Top face of the slab: a regular honeycomb. Bottom face: the same honeycomb
-after a T1 transition on one edge in every group of four cells (a rhombus of
-cells A, B, C, D). Half way down, the edge A|B shrinks to a point and the edge
-C|D grows out of it, so:
+  - fill a layer: groups of four (two 5-6, two 6-7 round one junction), each
+    group upright or turned over as a block; stack layers hexagon on
+    hexagon, pentagon/heptagon on pentagon/heptagon,
+  - two or four 5-6 fitted together, flipped (as in Wikipedia's picture),
+  - two or four 6-7 fitted together the same way.
 
-  A, B: hexagon on top, pentagon underneath, one triangular face  (5/6 scutoid)
-  C, D: hexagon on top, heptagon underneath, one triangular face  (6/7 scutoid)
+  python3 make_scutoids.py [OUT_DIR]   writes scutoid_5-6.stl, scutoid_6-7.stl
 
-B is A turned 180 degrees, D is C turned 180 degrees, and every rhombus is a
-translate of the first, so two STL files tile the slab. Each piece is mirror
-symmetric, so flipping it upside down gives the same piece: the next layer is
-the first one flipped, hexagons on hexagons, and the slabs stack. (In flat
-space, scutoids with only 5- and 6-sided ends can't fill space alone: the
-average cell of a flat tiling has exactly 6 sides, so pentagons need
-heptagons to balance them.)
+Shape. The top of a layer is a honeycomb of one slightly squashed hexagon.
+In each group of four, the edge between the two 5-6 pieces (P-Q) shrinks
+half way down to a point M, the junction, and an edge between the two 6-7
+pieces (P2-Q2) grows out of it: the 5-6s go from hexagon to pentagon, the
+6-7s from hexagon to heptagon, and each has one triangular face (P, Q, M or
+Q2, P2, M) — the scutoid's mark.
+
+  5-6 (A)  hexagon P, Q, W, (2D, -h), (2D, h), V      with M at (0, 0)
+  6-7 (C)  the cell above A, sharing P-V; D = DIAG, h = HALF
+
+Why flipped copies fit: the upright edges V and W either side of the
+junction sit on lines through M at right angles (45 degrees off the x
+axis), Q = -P, and P2 is P mirrored across M-V. Then each bent face (the
+face between a 5-6 and a 6-7 in a group) maps onto itself turned half a
+turn about the horizontal line from M to its upright edge, so a turned-over
+copy of either piece fits it from the other side, and four meet round a
+junction: two upright, two turned over.
+
+Flat space can't be filled with 5-6 scutoids alone: a flat tiling's cells
+average exactly six sides, so pentagons need heptagons to balance them.
 """
 import math
+import random
 import struct
 import sys
 from pathlib import Path
 
-R = 15.0          # honeycomb edge length (mm) = hexagon corner radius
-H = 40.0          # piece height (mm)
-ZJ = H / 2        # height of the junction (where the scutoid's triangle tips meet)
-T = 0.35 * R      # half length of the new C|D edge on the bottom
-GAP = 0.15        # clearance moved in per side (mm), so printed pieces fit
+R = 15.0      # size (mm): the hexagon's upright edges are R, the slanted ~0.99 R
+H = 40.0      # height (mm)
+GAP = 0.15    # clearance moved in per side (mm), so printed pieces fit
 
-S = math.sqrt(3) / 2 * R
-A_C = (S, 0.0)
-C_C = (0.0, 1.5 * R)
-
-
-def hexv(c, deg):
-    a = math.radians(deg)
-    return (c[0] + R * math.cos(a), c[1] + R * math.sin(a))
+HALF = R / 2          # half the triangle's top edge
+DIAG = 0.9 * R        # V and W are (DIAG, +-DIAG): 45 degrees from M
+P, Q = (0.0, HALF), (0.0, -HALF)
+V, W = (DIAG, DIAG), (DIAG, -DIAG)
+NW = (-DIAG, DIAG)                    # = -W: the other 5-6's corner
+M = (0.0, 0.0)
+U = (math.sqrt(0.5), math.sqrt(0.5))  # the line M-V
 
 
-P = (0.0, 0.5 * R)    # top: cells A, B, C meet
-Q = (0.0, -0.5 * R)   # top: cells A, B, D meet
-P2 = (T, 0.0)         # bottom: A, C, D meet
-Q2 = (-T, 0.0)        # bottom: B, C, D meet
-M = (0.0, 0.0)        # junction, at z = ZJ
+def mirror(p):
+    """Mirror across the line M-V."""
+    d = p[0] * U[0] + p[1] * U[1]
+    return (2 * d * U[0] - p[0], 2 * d * U[1] - p[1])
 
 
-def piece_a():
-    """Hexagon on top, pentagon underneath."""
-    v30, v90, v270, v330 = (hexv(A_C, d) for d in (30, 90, 270, 330))
-    top = [v30, v90, P, Q, v270, v330]
-    bot = [v30, v90, P2, v270, v330]
-    tris = []
-    # lateral faces, walking round counter-clockwise from above
-    tris += quad(v30, v90)
-    # with C: X = v90, polyline P(top) -> M -> P2(bottom)
-    tris += [(b(v90), b(P2), j(M)), (b(v90), j(M), t(v90)), (j(M), t(P), t(v90))]
-    # with B: the scutoid triangle
-    tris += [(j(M), t(Q), t(P))]
-    # with D: X = v270, polyline Q(top) -> M -> P2(bottom)
-    tris += [(b(P2), b(v270), j(M)), (b(v270), t(v270), j(M)), (t(v270), t(Q), j(M))]
-    tris += quad(v270, v330)
-    tris += quad(v330, v30)
-    tris += caps(top, bot)
-    return A_C, tris
+P2 = mirror(P)        # = (HALF, 0)
+Q2 = (-P2[0], -P2[1])
+A_CENTRE = (DIAG, 0.0)
+C_CENTRE = (0.0, HALF + DIAG)
 
 
-def piece_c():
-    """Hexagon on top, heptagon underneath."""
-    v30, v90, v150, v210, v330 = (hexv(C_C, d) for d in (30, 90, 150, 210, 330))
-    top = [v30, v90, v150, v210, P, v330]
-    bot = [v30, v90, v150, v210, Q2, P2, v330]
-    tris = []
-    tris += quad(v30, v90)
-    tris += quad(v90, v150)
-    tris += quad(v150, v210)
-    # with B: X = v210, polyline P(top) -> M -> Q2(bottom)
-    tris += [(b(v210), b(Q2), j(M)), (b(v210), j(M), t(v210)), (j(M), t(P), t(v210))]
-    # with D: the upside-down scutoid triangle
-    tris += [(b(Q2), b(P2), j(M))]
-    # with A: X = v330, polyline P(top) -> M -> P2(bottom)
-    tris += [(b(P2), b(v330), j(M)), (b(v330), t(v330), j(M)), (t(v330), t(P), j(M))]
-    tris += quad(v330, v30)
-    tris += caps(top, bot)
-    return C_C, tris
-
-
-def t(p):
-    return (p[0], p[1], H)
-
-
-def b(p):
-    return (p[0], p[1], 0.0)
-
-
-def j(p):
-    return (p[0], p[1], ZJ)
+def t(p): return (p[0], p[1], H)
+def b(p): return (p[0], p[1], 0.0)
+def j(p): return (p[0], p[1], H / 2)
 
 
 def quad(p0, p1):
@@ -110,7 +79,59 @@ def caps(top, bot):
     return out
 
 
-# --- checks and output -------------------------------------------------------
+def piece_5_6():
+    """Hexagon on top, pentagon underneath."""
+    v30, v330 = (2 * DIAG, HALF), (2 * DIAG, -HALF)
+    tris = quad(v30, V)
+    # bent face with C (symmetric triangulation, so it matches when flipped)
+    tris += [(b(V), b(P2), j(M)), (b(V), j(M), t(V)), (j(M), t(P), t(V))]
+    tris += [(j(M), t(Q), t(P))]                         # the triangle
+    tris += [(b(P2), b(W), j(M)), (b(W), t(W), j(M)), (t(W), t(Q), j(M))]
+    tris += quad(W, v330) + quad(v330, v30)
+    return tris + caps([v30, V, P, Q, W, v330], [v30, V, P2, W, v330])
+
+
+def piece_6_7():
+    """The cell above the 5-6: hexagon on top, heptagon underneath."""
+    top_r = (DIAG, DIAG + 2 * HALF)
+    top_t = (0.0, 2 * DIAG + HALF)
+    top_l = (-DIAG, DIAG + 2 * HALF)
+    # bent face with A (the 5-6), its triangles reversed
+    tris = [(b(V), j(M), b(P2)), (b(V), t(V), j(M)), (j(M), t(V), t(P))]
+    tris += quad(V, top_r) + quad(top_r, top_t) + quad(top_t, top_l) + quad(top_l, NW)
+    # bent face with B (the other 5-6)
+    tris += [(b(Q2), j(M), b(NW)), (b(NW), j(M), t(NW)), (t(NW), j(M), t(P))]
+    tris += [(b(Q2), b(P2), j(M))]                       # the triangle
+    return tris + caps([P, V, top_r, top_t, top_l, NW], [Q2, P2, V, top_r, top_t, top_l, NW])
+
+
+# --- moves -------------------------------------------------------------------
+
+def flip(p):
+    """Half a turn about the horizontal line through M along M-V."""
+    q = mirror(p[:2])
+    return (q[0], q[1], H - p[2])
+
+
+def turn_upright(p):
+    """Half a turn about the upright through M."""
+    return (-p[0], -p[1], p[2])
+
+
+def flip_group(p):
+    """Turn a whole group of four over: half a turn about its long (y) axis."""
+    return (-p[0], p[1], H - p[2])
+
+
+def moved(tris, f):
+    return [tuple(f(p) for p in tri) for tri in tris]
+
+
+def shift(d):
+    return lambda p: (p[0] + d[0], p[1] + d[1], p[2])
+
+
+# --- checks ------------------------------------------------------------------
 
 def sub(a, c):
     return (a[0] - c[0], a[1] - c[1], a[2] - c[2])
@@ -130,7 +151,7 @@ def volume(tris):
 
 
 def check_closed(tris, name):
-    key = lambda p: tuple(round(x, 6) for x in p)
+    key = lambda p: tuple(round(x, 6) for x in p)  # noqa: E731
     edges = {}
     for tri in tris:
         for i in range(3):
@@ -141,8 +162,56 @@ def check_closed(tris, name):
         sys.exit(f"{name}: not watertight/consistent, {len(bad)} bad edges")
 
 
+def inside(pt, tris):
+    """Ray-cast parity along a slightly skewed direction."""
+    d = (1.0, 0.0123, 0.0071)
+    n = 0
+    for p0, p1, p2 in tris:
+        e1 = sub(p1, p0)
+        e2 = sub(p2, p0)
+        h = cross(d, e2)
+        a = sum(e1[i] * h[i] for i in range(3))
+        if abs(a) < 1e-12:
+            continue
+        f = 1 / a
+        s = sub(pt, p0)
+        u = f * sum(s[i] * h[i] for i in range(3))
+        if u < 0 or u > 1:
+            continue
+        q = cross(s, e1)
+        v = f * sum(d[i] * q[i] for i in range(3))
+        if v < 0 or u + v > 1:
+            continue
+        if f * sum(e2[i] * q[i] for i in range(3)) > 0:
+            n += 1
+    return n % 2 == 1
+
+
+KEY = lambda tri: frozenset(tuple(round(x, 6) for x in p) for p in tri)  # noqa: E731
+
+
+def shared(x, y):
+    return len({KEY(a) for a in x} & {KEY(a) for a in y})
+
+
+def sample(pieces, box, n, seed, near=None):
+    """Random points in two pieces, and (within `near` of the upright through
+    the origin, if given) in none."""
+    random.seed(seed)
+    both = gaps = 0
+    for _ in range(n):
+        pt = (random.uniform(-box[0], box[0]), random.uniform(-box[1], box[1]), random.uniform(0, H))
+        k = sum(inside(pt, tr) for tr in pieces)
+        both += k > 1
+        if near is None or math.hypot(pt[0], pt[1]) < near:
+            gaps += k == 0
+    return both, gaps
+
+
+# --- output ------------------------------------------------------------------
+
 def shrink(tris, centre, gap):
-    """Pull every vertex `gap` towards the cell's own axis (clearance)."""
+    """Pull every vertex `gap` towards the piece's own axis (clearance)."""
     def mv(p):
         dx, dy = p[0] - centre[0], p[1] - centre[1]
         d = math.hypot(dx, dy)
@@ -169,24 +238,48 @@ def write_stl(path, tris, name):
 
 
 def main():
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
+    out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent
     out.mkdir(parents=True, exist_ok=True)
-    a_c, a = piece_a()
-    c_c, c = piece_c()
-    check_closed(a, "A")
-    check_closed(c, "C")
-    va, vc = volume(a), volume(c)
-    hex_area = 3 * math.sqrt(3) / 2 * R * R
-    # A, B (= A turned), C, D (= C turned) fill one rhombus of 4 cells
-    print(f"vol A {va:.1f}  vol C {vc:.1f}  2A+2C {2 * (va + vc):.1f}  "
-          f"4 prisms {4 * hex_area * H:.1f}")
-    assert va > 0 and vc > 0
-    assert abs(2 * (va + vc) - 4 * hex_area * H) < 1e-6 * hex_area * H
-    for name, centre, tris in (("scutoid_5-6", a_c, a), ("scutoid_6-7", c_c, c)):
-        part = recentre(shrink(tris, centre, GAP), centre)
+    f = piece_5_6()
+    g = piece_6_7()
+    check_closed(f, "5-6")
+    check_closed(g, "6-7")
+    assert volume(f) > 0 and volume(g) > 0
+    print(f"volumes: 5-6 {volume(f):.1f}, 6-7 {volume(g):.1f}")
+
+    # a layer: groups of four, some turned over, round a middle group
+    group = [f, moved(f, turn_upright), g, moved(g, turn_upright)]
+    assert shared(group[0], group[2]) == 3 and shared(group[0], group[1]) == 1
+    assert shared(group[2], group[3]) == 1
+    a = (DIAG, DIAG + HALF)
+    steps = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
+    for flipped in (set(), {0}, {0, 2, 4, 6}):
+        layer = []
+        for k, (i, jj) in enumerate(steps):
+            d = (2 * a[0] * (i - jj), 2 * a[1] * (i + jj))
+            for piece in group:
+                piece = moved(piece, flip_group) if k in flipped else piece
+                layer.append(moved(piece, shift(d)))
+        both, gaps = sample(layer, (2 * DIAG + 2, 2 * DIAG + 2 * HALF + 2), 20000, 1)
+        print(f"layer, groups {sorted(flipped)} turned over: in two pieces {both}, in none {gaps}")
+        assert both == 0 and gaps == 0
+
+    # four of one piece round a junction (any two neighbours make a pair)
+    for name, piece in (("5-6", f), ("6-7", g)):
+        turned = moved(piece, flip)
+        four = [piece, moved(piece, turn_upright), turned, moved(turned, turn_upright)]
+        counts = [shared(four[x], four[y]) for x, y in ((0, 1), (2, 3), (0, 2), (1, 3), (0, 3), (1, 2))]
+        both, gaps = sample(four, (2 * DIAG + 2 * HALF, 2 * DIAG + 2 * HALF), 30000, 2, near=HALF)
+        print(f"four {name}: shared triangles {counts}, in two pieces {both}, "
+              f"near the junction in none {gaps}")
+        assert counts == [1, 1, 3, 3, 3, 3]
+        assert both == 0 and gaps == 0
+
+    for name, piece, centre in (("scutoid_5-6", f, A_CENTRE), ("scutoid_6-7", g, C_CENTRE)):
+        part = recentre(shrink(piece, centre, GAP), centre)
         check_closed(part, name)
         write_stl(out / f"{name}.stl", part, name)
-        print(f"wrote {out / (name + '.stl')}  ({len(part)} triangles)")
+        print(f"wrote {out / (name + '.stl')}")
 
 
 if __name__ == "__main__":
