@@ -12,8 +12,7 @@ The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper tit
 
 ![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the bent faces where the pieces meet](images/apart.png)
 
-*A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue). The
-back 5-6 shows its triangle; the 6-7 on the right shows a bent face.*
+*A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue).*
 
 ![A packed layer of 5-6 and 6-7 pieces, with some groups turned over so their tops show pentagons and heptagons among the hexagons](images/packed.png)
 
@@ -55,9 +54,6 @@ you can build:
   groups of four, below) with enough to try every arrangement.
 - Print standing on either end, with no supports. The sides slope by at
   most about 21° from vertical.
-- Each piece is shrunk by 0.15 mm on every side so printed pieces slide
-  together. If they're too tight or too loose, change `GAP` in
-  `make_scutoids.py` and regenerate (see below).
 
 ## Telling the faces apart
 
