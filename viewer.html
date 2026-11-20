@@ -21,7 +21,10 @@
   <select id="mode">
     <option value="layer">layer (some groups turned over)</option>
     <option value="group">group of four (two 5-6, two 6-7)</option>
+    <option value="stack">two layers stacked</option>
+    <option value="f2">two 5-6</option>
     <option value="f4">four 5-6</option>
+    <option value="g2">two 6-7</option>
     <option value="g4">four 6-7</option>
   </select>
   apart <input id="ex" type="range" min="0" max="1" step="0.01" value="0">
@@ -159,7 +162,7 @@ const upright = p => [-p[0], -p[1], p[2]];                // half a turn about t
 const flip = p => [p[1], p[0], H - p[2]];                 // about the 45-degree line to V
 const flipGroup = p => [-p[0], p[1], H - p[2]];           // a whole group, about its long axis
 
-function add(name, move, turned) {
+function add(name, move, turned, level = 0) {
   const src = P[name], c = src.centre, pos = new Float32Array(src.pos.length);
   for (let i = 0; i < pos.length; i += 3) {
     const q = move([src.pos[i] + c[0], src.pos[i + 1] + c[1], src.pos[i + 2]]);
@@ -176,6 +179,7 @@ function add(name, move, turned) {
   g.boundingBox.getCenter(centre);
   centre.z = 0;
   m.userData.centre = centre;
+  m.userData.level = level;
   scene.add(m);
   items.push(m);
 }
@@ -184,16 +188,34 @@ function build() {
   for (const m of items) { scene.remove(m); m.geometry.dispose(); }
   items = [];
   const id = p => p;
-  if (sel.value === 'layer') {
-    // groups of four on a lattice; (a) is from the 5-6's centre to the 6-7's
+  // groups of four on a lattice, checkerboard turned over; (a) is from the
+  // 5-6's centre to the 6-7's. Each level up is turned the other way, so
+  // matching ends meet.
+  const layers = (reach, levels) => {
     const a = [P['5-6'].centre[0], P['6-7'].centre[1]];
-    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
-      if (Math.abs(i + j) > 2) continue;
-      const dx = 2 * a[0] * (i - j), dy = 2 * a[1] * (i + j), turned = (i + j) % 2 !== 0;
-      const at = f => p => { const q = f(turned ? flipGroup(p) : p); return [q[0] + dx, q[1] + dy, q[2]]; };
-      for (const n of ['5-6', '6-7']) { add(n, at(id), turned); add(n, at(upright), turned); }
-    }
+    for (let level = 0; level < levels; level++)
+      for (let i = -reach; i <= reach; i++) for (let j = -reach; j <= reach; j++) {
+        if (Math.abs(i + j) > reach) continue;
+        const dx = 2 * a[0] * (i - j), dy = 2 * a[1] * (i + j);
+        const turned = ((i + j) % 2 !== 0) !== (level % 2 === 1);
+        const at = f => p => {
+          const q = f(turned ? flipGroup(p) : p);
+          return [q[0] + dx, q[1] + dy, q[2] + level * H];
+        };
+        for (const n of ['5-6', '6-7']) { add(n, at(id), turned, level); add(n, at(upright), turned, level); }
+      }
+  };
+  if (sel.value === 'layer') {
+    layers(2, 1);
     cam.position.set(-150, -260, 260);
+  } else if (sel.value === 'stack') {
+    layers(1, 2);
+    cam.position.set(-150, -260, 200);
+  } else if (sel.value === 'f2' || sel.value === 'g2') {
+    const n = sel.value === 'f2' ? '5-6' : '6-7';
+    add(n, id, false);
+    add(n, flip, true);
+    cam.position.set(-110, -140, 110);
   } else if (sel.value === 'group') {
     add('5-6', id, false);
     add('5-6', upright, false);
@@ -208,12 +230,16 @@ function build() {
     add(n, p => upright(flip(p)), true);
     cam.position.set(-110, -140, 110);
   }
-  oc.target.set(0, 0, H / 2);
+  oc.target.set(0, 0, sel.value === 'stack' ? H : H / 2);
   oc.update();
   place();
 }
 
 function place() {
+  if (sel.value === 'stack') {     // lift the layers apart
+    for (const m of items) m.position.set(0, 0, m.userData.level * ex.value * H);
+    return;
+  }
   const mid = new THREE.Vector3();
   for (const m of items) mid.add(m.userData.centre);
   mid.divideScalar(items.length);

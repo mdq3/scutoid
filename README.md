@@ -6,6 +6,16 @@ Scutoids show how nature solves a fundamental 3D packing problem: bending a laye
 
 Before scutoids were discovered in 2018, textbooks taught that epithelial cells (the tightly packed cells that line our skin, organs, and blood vessels) were shaped like simple prisms or tapered frustums (truncated pyramids). However, when biologists and mathematicians modeled how these tissues actually bend into tubes, spheres, and folds, they realized simple prisms couldn't pack tightly without leaving gaps.
 
+![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the bent faces where the pieces meet](images/apart.png)
+
+*A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue). The
+back 5-6 shows its triangle; the 6-7 on the right shows a bent face.*
+
+![A packed layer of 5-6 and 6-7 pieces, with some groups turned over so their tops show pentagons and heptagons among the hexagons](images/packed.png)
+
+*A packed layer. Groups that are turned over (darker) show pentagons and
+heptagons on top; the rest show hexagons.*
+
 
 ### The Main Point of Scutoids
 
@@ -26,8 +36,6 @@ In this repo are two 3D-printable scutoids for showing how scutoids pack:
 | `scutoid_5-6.stl` | hexagon on one end, pentagon on the other | about 27 × 27 mm, 40 mm tall |
 | `scutoid_6-7.stl` | hexagon on one end, heptagon on the other | about 27 × 35 mm, 40 mm tall |
 
-
-
 Both pieces use the same honeycomb of slightly squashed hexagons, so they
 fit together and with flipped copies of themselves. With these two models
 you can build:
@@ -36,15 +44,6 @@ you can build:
 - two or four 5-6 pieces fitted together, some flipped,
 - two or four 6-7 pieces fitted together, some flipped.
 
-![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the bent faces where the pieces meet](images/apart.png)
-
-*A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue). The
-back 5-6 shows its triangle; the 6-7 on the right shows a bent face.*
-
-![A packed layer of 5-6 and 6-7 pieces, with some groups turned over so their tops show pentagons and heptagons among the hexagons](images/packed.png)
-
-*A packed layer. Groups that are turned over (darker) show pentagons and
-heptagons on top; the rest show hexagons.*
 
 ## 3D Printing
 
@@ -86,6 +85,8 @@ The outside of the group is all plain faces, so it stands as a solid
 block. Its top shows four hexagons and its bottom two pentagons and two
 heptagons.
 
+![A group of four packed together: two pink 5-6 pieces and two blue 6-7 pieces, hexagons up](images/group.png)
+
 ### A full layer
 
 Put groups of four side by side, all facing the same way (the two 6-7
@@ -96,6 +97,11 @@ line through its two 6-7 pieces and drop it back in. Its top then shows
 two pentagons and two heptagons. Mix upright and turned groups however you
 like, for example in a checkerboard.
 
+![A layer seen from above, with turned-over groups in a checkerboard: their pentagons and heptagons (darker) sit among the hexagons](images/layer.png)
+
+*Seen from above: the darker groups are turned over, so their tops show
+pentagons and heptagons.*
+
 In flat space a layer can't be made of 5-6 pieces alone. The cells of a
 flat tiling average exactly six sides, so every pentagon needs a heptagon
 to balance it. That's why the layer needs both pieces.
@@ -105,6 +111,11 @@ to balance it. That's why the layer needs both pieces.
 Stack groups so that matching faces meet: hexagons on hexagons, and
 pentagons/heptagons on pentagons/heptagons. Going up a column, each group
 is the other way up from the one below it.
+
+![Two layers, the upper one lifted off: each group in the upper layer is turned the other way from the group under it](images/stack.png)
+
+*Two layers, the top one lifted off. Each group in the top layer is the
+other way up from the one under it, so matching ends meet.*
 
 ### Two or four 5-6
 
@@ -118,6 +129,14 @@ Any two neighbours from these four also fit together as a pair: one
 upright and one turned over, along a bent face. This is the pairing shown
 in Wikipedia's picture of two flipped 5-6 scutoids.
 
+<p>
+<img src="images/pair-5-6.png" width="49%" alt="Two 5-6 pieces, one turned over, slightly apart, showing the bent faces that fit together">
+<img src="images/four-5-6.png" width="49%" alt="Four 5-6 pieces packed together, two hexagon up and two pentagon up">
+</p>
+
+*Left: a pair, slightly apart (the darker one is turned over). Right: all
+four together.*
+
 ### Two or four 6-7
 
 The same as with 5-6 pieces:
@@ -127,3 +146,11 @@ The same as with 5-6 pieces:
 2. Turn two more over, heptagon up, and stand one in each notch.
 
 Again, any two neighbours make a flipped pair.
+
+<p>
+<img src="images/pair-6-7.png" width="49%" alt="Two 6-7 pieces, one turned over, slightly apart, showing the bent faces that fit together">
+<img src="images/four-6-7.png" width="49%" alt="Four 6-7 pieces packed together, two hexagon up and two heptagon up">
+</p>
+
+*Left: a pair, slightly apart (the darker one is turned over). Right: all
+four together.*
