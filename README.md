@@ -17,7 +17,6 @@ The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper tit
 *A packed layer. Groups that are turned over (darker) show pentagons and
 heptagons on top; the rest show hexagons.*
 
-
 ### The Main Point of Scutoids
 
 * Minimizing energy during bending: By swapping neighbors partway down their height via a Y-shaped edge split, cells can curve and twist smoothly while keeping their surface tension and bending energy as low as possible.
@@ -29,13 +28,17 @@ heptagons on top; the rest show hexagons.*
 * Tissue engineering & artificial organs: When growing artificial organs or skin grafts in a lab, scientists use scutoid geometry to design better scaffolds so lab-grown cells organize and curve naturally like real human tissue.
 * Biomimetic design & architecture: Engineers and materials scientists study scutoids to create stronger, lighter, interlocking modular structures—such as curved architectural facades, flexible armor, and aerospace panels—that distribute mechanical stress evenly without rigid fasteners.
 
-### What is this repo all about then?
-In this repo are two 3D-printable scutoids for showing how scutoids pack:
+## What is this repo all about then?
+In this repo are:
+
+* Two 3D-printable scutoids for showing how scutoids pack.
+* A scutoid viewer that can be opened in a web browser.
+  * This is also hosted here: **[https://mdq3.github.io/scutoid/viewer.html]()**
 
 | File | Ends | Size |
 |---|---|---|
-| `scutoid_5-6.stl` | hexagon on one end, pentagon on the other | about 27 × 27 mm, 40 mm tall |
-| `scutoid_6-7.stl` | hexagon on one end, heptagon on the other | about 27 × 35 mm, 40 mm tall |
+| [scutoid_5-6.stl]() | hexagon on one end, pentagon on the other | about 27 × 27 mm, 40 mm tall |
+| [scutoid_6-7.stl]() | hexagon on one end, heptagon on the other | about 27 × 35 mm, 40 mm tall |
 
 Both pieces use the same honeycomb of slightly squashed hexagons, so they
 fit together and with flipped copies of themselves. With these two models
@@ -44,7 +47,6 @@ you can build:
 - a full layer of 5-6 and 6-7 pieces, which stacks into layers,
 - two or four 5-6 pieces fitted together, some flipped,
 - two or four 6-7 pieces fitted together, some flipped.
-
 
 ## 3D Printing
 
