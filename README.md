@@ -8,7 +8,7 @@ Scutoids show how nature solves a fundamental 3D packing problem: bending a laye
 
 Before scutoids were discovered in 2018, textbooks taught that epithelial cells (the tightly packed cells that line our skin, organs, and blood vessels) were shaped like simple prisms or tapered frustums (truncated pyramids). However, when biologists and mathematicians modeled how these tissues actually bend into tubes, spheres, and folds, they realized simple prisms couldn't pack tightly without leaving gaps.
 
-The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper titled "Scutoids are a geometrical solution to three-dimensional packing of epithelia" published in 2018. I have included it in this repo in PDF format [here](paper/scutoid-paper.pdf). Also check out the [Scutoid Wikipedia](https://en.wikipedia.org/wiki/Scutoid) page.
+The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper titled "Scutoids are a geometrical solution to three-dimensional packing of epithelia" published in 2018. I have included it in this repo in PDF format [here](paper/scutoid-paper.pdf). Also check out the [Scutoid Wikipedia page](https://en.wikipedia.org/wiki/Scutoid).
 
 ![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the non-planar faces where the pieces meet](images/apart.png)
 
