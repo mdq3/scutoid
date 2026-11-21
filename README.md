@@ -33,12 +33,12 @@ In this repo are:
 
 * Two 3D-printable scutoids for showing how scutoids pack.
 * A scutoid viewer that can be opened in a web browser.
-  * This is also hosted here: **[https://mdq3.github.io/scutoid/viewer.html]()**
+  * This is also hosted here: **[https://mdq3.github.io/scutoid/viewer.html](https://mdq3.github.io/scutoid/viewer.html)**
 
 | File | Ends | Size |
 |---|---|---|
-| [scutoid_5-6.stl]() | hexagon on one end, pentagon on the other | about 27 × 27 mm, 40 mm tall |
-| [scutoid_6-7.stl]() | hexagon on one end, heptagon on the other | about 27 × 35 mm, 40 mm tall |
+| [scutoid_5-6.stl](scutoid_5-6.stl) | hexagon on one end, pentagon on the other | about 27 × 27 mm, 40 mm tall |
+| [scutoid_6-7.stl](scutoid_6-7.stl) | hexagon on one end, heptagon on the other | about 27 × 35 mm, 40 mm tall |
 
 Both pieces use the same honeycomb of slightly squashed hexagons, so they
 fit together and with flipped copies of themselves. With these two models
