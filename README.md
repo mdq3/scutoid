@@ -10,7 +10,7 @@ Before scutoids were discovered in 2018, textbooks taught that epithelial cells 
 
 The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper titled "Scutoids are a geometrical solution to three-dimensional packing of epithelia" published in 2018. I have included it in this repo in PDF format [here](paper/scutoid-paper.pdf). Also check out the [Scutoid Wikipedia](https://en.wikipedia.org/wiki/Scutoid) page.
 
-![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the bent faces where the pieces meet](images/apart.png)
+![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the non-planar faces where the pieces meet](images/apart.png)
 
 *A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue).*
 
@@ -62,10 +62,13 @@ Each piece has three kinds of side face:
 - **plain faces**: flat upright rectangles,
 - **the triangle**: one triangular face. Its wide edge is on the hexagon
   end of a 5-6, and on the heptagon end of a 6-7,
-- **two bent faces**, one on each side of the triangle, each folded where
-  the triangle's point is, half way up.
+- **two non-planar faces**, one on each side of the triangle. Each is a
+  five-sided face (its corners: two on the top, the triangle's point half
+  way up, two on the bottom) that twists smoothly between them, like a
+  soap film stretched over that outline, as the faces of the scutoids in
+  the paper do.
 
-The pieces fit together along the triangles and bent faces. The plain
+The pieces fit together along the triangles and non-planar faces. The plain
 faces fit against any other plain face.
 
 ## Arrangements
@@ -77,8 +80,8 @@ This is the building block of a layer.
 1. Stand two 5-6 pieces hexagon up, with their triangles pressed together.
    The triangles' points meet half way down.
 2. That leaves a notch on each side, between the two 5-6 pieces. Stand a
-   6-7 piece hexagon up in each notch. Their bent faces fit against the
-   5-6 pieces' bent faces, and their triangles meet under the 5-6 pieces'
+   6-7 piece hexagon up in each notch. Their non-planar faces fit against the
+   5-6 pieces' non-planar faces, and their triangles meet under the 5-6 pieces'
    triangles.
 
 The outside of the group is all plain faces, so it stands as a solid
@@ -122,15 +125,15 @@ other way up from the one under it, so matching ends meet.*
 1. Stand two 5-6 pieces hexagon up with their triangles together, as in
    step 1 of a group.
 2. Turn two more over, pentagon up, and stand one in each notch. Each
-   turned piece's bent faces fit both upright pieces' bent faces, and the
+   turned piece's non-planar faces fit both upright pieces' non-planar faces, and the
    two turned pieces' triangles meet at the bottom.
 
 Any two neighbours from these four also fit together as a pair: one
-upright and one turned over, along a bent face. This is the pairing shown
+upright and one turned over, along a non-planar face. This is the pairing shown
 in Wikipedia's picture of two flipped 5-6 scutoids.
 
 <p>
-<img src="images/pair-5-6.png" width="49%" alt="Two 5-6 pieces, one turned over, slightly apart, showing the bent faces that fit together">
+<img src="images/pair-5-6.png" width="49%" alt="Two 5-6 pieces, one turned over, slightly apart, showing the non-planar faces that fit together">
 <img src="images/four-5-6.png" width="49%" alt="Four 5-6 pieces packed together, two hexagon up and two pentagon up">
 </p>
 
@@ -148,7 +151,7 @@ The same as with 5-6 pieces:
 Again, any two neighbours make a flipped pair.
 
 <p>
-<img src="images/pair-6-7.png" width="49%" alt="Two 6-7 pieces, one turned over, slightly apart, showing the bent faces that fit together">
+<img src="images/pair-6-7.png" width="49%" alt="Two 6-7 pieces, one turned over, slightly apart, showing the non-planar faces that fit together">
 <img src="images/four-6-7.png" width="49%" alt="Four 6-7 pieces packed together, two hexagon up and two heptagon up">
 </p>
 

@@ -22,11 +22,11 @@ Q2, P2, M) — the scutoid's mark.
 
 Why flipped copies fit: the upright edges V and W either side of the
 junction sit on lines through M at right angles (45 degrees off the x
-axis), Q = -P, and P2 is P mirrored across M-V. Then each bent face (the
-face between a 5-6 and a 6-7 in a group) maps onto itself turned half a
-turn about the horizontal line from M to its upright edge, so a turned-over
-copy of either piece fits it from the other side, and four meet round a
-junction: two upright, two turned over.
+axis), Q = -P, and P2 is P mirrored across M-V. Then each non-planar face
+(the face between a 5-6 and a 6-7 in a group; see below) maps onto itself
+turned half a turn about the horizontal line from M to its upright edge, so
+a turned-over copy of either piece fits it from the other side, and four
+meet round a junction: two upright, two turned over.
 
 Flat space can't be filled with 5-6 scutoids alone: a flat tiling's cells
 average exactly six sides, so pentagons need heptagons to balance them.
@@ -67,46 +67,177 @@ C_CENTRE = (0.0, HALF + DIAG)
 
 def t(p): return (p[0], p[1], H)
 def b(p): return (p[0], p[1], 0.0)
-def j(p): return (p[0], p[1], H / 2)
 
 
 def quad(p0, p1):
     return [(b(p0), b(p1), t(p1)), (b(p0), t(p1), t(p0))]
 
 
-def caps(top, bot):
+def lerp(p, q, s):
+    return tuple(p[i] + (q[i] - p[i]) * s for i in range(3))
+
+
+def flip3(p):
+    """Half a turn about the horizontal line through M along M-V."""
+    q = mirror(p[:2])
+    return (q[0], q[1], H - p[2])
+
+
+def mirror_y(p): return (p[0], -p[1], p[2])
+def mirror_x(p): return (-p[0], p[1], p[2])
+
+
+# --- the non-planar faces ---------------------------------------------------
+#
+# Each non-planar face is a pentagon: the top edge P-V, the upright edge at
+# V, the bottom edge P2-V, and its fourth side the triangle's edge P-M with,
+# below the junction M, the other piece's triangle edge M-P2. Its five
+# corners aren't in a plane, as the faces of the scutoids in the paper
+# aren't: here like a soap film stretched over that outline (the grid relaxed
+# until each point is the average of its neighbours), smooth everywhere inside.
+# It's worked out above the junction and turned half a turn about M-V for
+# below it, so it maps onto itself exactly: the line M-V lies in it, and a
+# turned-over piece fits it from the other side.
+
+ACROSS = 12      # grid steps across a non-planar face (P side to V)
+UP = 16          # grid steps up it (even: the junction's on a grid line)
+
+
+def _face_grid():
+    n, m = ACROSS, UP
+    tP, tV, bP2, bV = t(P), t(V), b(P2), b(V)
+    Mj = (M[0], M[1], H / 2)
+
+    def left(jj):
+        if jj >= m // 2:
+            return lerp(Mj, tP, (jj - m // 2) / (m // 2))
+        return lerp(Mj, bP2, (m // 2 - jj) / (m // 2))
+
+    def right(jj):
+        return (V[0], V[1], H * jj / m)
+
+    g = [[lerp(left(jj), right(jj), i / n) for jj in range(m + 1)] for i in range(n + 1)]
+    for i in range(n + 1):
+        g[i][m] = lerp(tP, tV, i / n)
+        g[i][0] = lerp(bP2, bV, i / n)
+    for _ in range(20000):
+        moved_most = 0.0
+        for i in range(1, n):
+            for jj in range(1, m):
+                a, c, d, e = g[i - 1][jj], g[i + 1][jj], g[i][jj - 1], g[i][jj + 1]
+                p = tuple((a[k] + c[k] + d[k] + e[k]) / 4 for k in range(3))
+                moved_most = max(moved_most, max(abs(p[k] - g[i][jj][k]) for k in range(3)))
+                g[i][jj] = p
+        if moved_most < 1e-10:
+            break
+    # exactly symmetric: the junction's row on the line M-V, below it the top
+    # half turned over
+    for i in range(n + 1):
+        g[i][m // 2] = lerp(Mj, right(m // 2), i / n)
+        for jj in range(m // 2):
+            g[i][jj] = flip3(g[i][m - jj])
+    return g
+
+
+GRID = _face_grid()
+
+
+def non_planar_face():
+    """The 5-6's non-planar face with the 6-7 above it (C), facing out of the 5-6.
+    Each cell's diagonal is mirrored about the junction's row, so the
+    triangles map onto themselves when turned over too."""
+    g, n, m = GRID, ACROSS, UP
     out = []
-    for i in range(1, len(top) - 1):
-        out.append((t(top[0]), t(top[i]), t(top[i + 1])))
-    for i in range(1, len(bot) - 1):
-        out.append((b(bot[0]), b(bot[i + 1]), b(bot[i])))
+    for i in range(n):
+        for jj in range(m):
+            a, bb, c, d = g[i][jj], g[i + 1][jj], g[i + 1][jj + 1], g[i][jj + 1]
+            if jj >= m // 2:
+                out += [(a, d, c), (a, c, bb)]
+            else:
+                out += [(a, d, bb), (bb, d, c)]
     return out
+
+
+def reverse(tris):
+    return [(p0, p2, p1) for p0, p1, p2 in tris]
+
+
+def facing(tris, centre):
+    """Each (flat-face) triangle turned to face away from `centre`."""
+    out = []
+    for tri in tris:
+        n = cross(sub(tri[1], tri[0]), sub(tri[2], tri[0]))
+        mid = tuple(sum(p[k] for p in tri) / 3 for k in range(3))
+        out.append(tri if sum(n[k] * (mid[k] - centre[k]) for k in range(3)) > 0
+                   else (tri[0], tri[2], tri[1]))
+    return out
+
+
+def fan(poly):
+    return [(poly[0], poly[i], poly[i + 1]) for i in range(1, len(poly) - 1)]
+
+
+def scutoid_triangle(left, right):
+    """The triangle face between two pieces of a pair (5-6: P, Q, M; 6-7: P2,
+    Q2, M), cut at the non-planar faces' rows so no edge has a corner in its middle;
+    `left`, `right` run from M out to its wide edge. Symmetric under half a
+    turn about the upright, so the pair's triangles are the same."""
+    mid = [((l[0] + r[0]) / 2, (l[1] + r[1]) / 2, l[2]) for l, r in zip(left, right)]
+    out = [(left[0], left[1], mid[1]), (right[0], mid[1], right[1])]
+    for k in range(1, len(left) - 1):
+        out += [(left[k], mid[k], mid[k + 1]), (left[k], mid[k + 1], left[k + 1]),
+                (right[k], mid[k + 1], mid[k]), (right[k], right[k + 1], mid[k + 1])]
+    return out
+
+
+def upright_side(edge, c0, c1):
+    """A plain face from an upright edge cut at the non-planar face's rows (`edge`,
+    bottom to top) to the straight upright c0-c1 (bottom, top)."""
+    return fan([c0, c1] + edge[::-1])
 
 
 def piece_5_6():
     """Hexagon on top, pentagon underneath."""
+    g, n, m = GRID, ACROSS, UP
+    centre = (A_CENTRE[0], A_CENTRE[1], H / 2)
     v30, v330 = (2 * DIAG, HALF), (2 * DIAG, -HALF)
-    tris = quad(v30, V)
-    # bent face with C (symmetric triangulation, so it matches when flipped)
-    tris += [(b(V), b(P2), j(M)), (b(V), j(M), t(V)), (j(M), t(P), t(V))]
-    tris += [(j(M), t(Q), t(P))]                         # the triangle
-    tris += [(b(P2), b(W), j(M)), (b(W), t(W), j(M)), (t(W), t(Q), j(M))]
-    tris += quad(W, v330) + quad(v330, v30)
-    return tris + caps([v30, V, P, Q, W, v330], [v30, V, P2, W, v330])
+    face_v = non_planar_face()                           # with C
+    face_w = reverse(moved(face_v, mirror_y))            # with D
+    tri = scutoid_triangle([g[0][k] for k in range(m // 2, m + 1)],
+                           [mirror_y(g[0][k]) for k in range(m // 2, m + 1)])
+    v_edge = [g[n][k] for k in range(m + 1)]
+    w_edge = [mirror_y(p) for p in v_edge]
+    flat = (upright_side(v_edge, b(v30), t(v30)) + upright_side(w_edge, b(v330), t(v330))
+            + quad(v330, v30) + tri)
+    top = ([t(v30)] + [g[i][m] for i in range(n, -1, -1)] + [(0.0, 0.0, H)]
+           + [mirror_y(g[i][m]) for i in range(n + 1)] + [t(v330)])
+    bottom = ([b(v30)] + [g[i][0] for i in range(n, 0, -1)]
+              + [mirror_y(g[i][0]) for i in range(n + 1)] + [b(v330)])
+    flat += fan(top) + fan(bottom)
+    return face_v + face_w + facing(flat, centre)
 
 
 def piece_6_7():
     """The cell above the 5-6: hexagon on top, heptagon underneath."""
+    g, n, m = GRID, ACROSS, UP
+    centre = (C_CENTRE[0], C_CENTRE[1], H / 2)
     top_r = (DIAG, DIAG + 2 * HALF)
     top_t = (0.0, 2 * DIAG + HALF)
     top_l = (-DIAG, DIAG + 2 * HALF)
-    # bent face with A (the 5-6), its triangles reversed
-    tris = [(b(V), j(M), b(P2)), (b(V), t(V), j(M)), (j(M), t(V), t(P))]
-    tris += quad(V, top_r) + quad(top_r, top_t) + quad(top_t, top_l) + quad(top_l, NW)
-    # bent face with B (the other 5-6)
-    tris += [(b(Q2), j(M), b(NW)), (b(NW), j(M), t(NW)), (t(NW), j(M), t(P))]
-    tris += [(b(Q2), b(P2), j(M))]                       # the triangle
-    return tris + caps([P, V, top_r, top_t, top_l, NW], [Q2, P2, V, top_r, top_t, top_l, NW])
+    face_a = reverse(non_planar_face())                  # with A (the 5-6)
+    face_b = moved(non_planar_face(), mirror_x)          # with B (the other 5-6)
+    tri = scutoid_triangle([g[0][k] for k in range(m // 2, -1, -1)],
+                           [mirror_x(g[0][k]) for k in range(m // 2, -1, -1)])
+    v_edge = [g[n][k] for k in range(m + 1)]
+    nw_edge = [mirror_x(p) for p in v_edge]
+    flat = (upright_side(v_edge, b(top_r), t(top_r)) + upright_side(nw_edge, b(top_l), t(top_l))
+            + quad(top_r, top_t) + quad(top_t, top_l) + tri)
+    top = ([t(top_t), t(top_r)] + [g[i][m] for i in range(n, -1, -1)]
+           + [mirror_x(g[i][m]) for i in range(1, n + 1)] + [t(top_l)])
+    bottom = ([b(top_t), b(top_r)] + [g[i][0] for i in range(n, -1, -1)] + [(0.0, 0.0, 0.0)]
+              + [mirror_x(g[i][0]) for i in range(n + 1)] + [b(top_l)])
+    flat += fan(top) + fan(bottom)
+    return face_a + face_b + facing(flat, centre)
 
 
 # --- moves -------------------------------------------------------------------
@@ -198,14 +329,39 @@ def shared(x, y):
     return len({KEY(a) for a in x} & {KEY(a) for a in y})
 
 
+class Solid:
+    """A piece's triangles bucketed by y and z, so a ray along x (`inside`)
+    only tests the few it might cross."""
+    CELL = 2.0
+
+    def __init__(self, tris):
+        self.buckets = {}
+        self.lo = tuple(min(p[k] for tri in tris for p in tri) for k in range(3))
+        self.hi = tuple(max(p[k] for tri in tris for p in tri) for k in range(3))
+        for tri in tris:
+            # the ray is skewed a little, so widen by what it drifts across a piece
+            y0, y1 = min(p[1] for p in tri) - 1, max(p[1] for p in tri) + 1
+            z0, z1 = min(p[2] for p in tri) - 1, max(p[2] for p in tri) + 1
+            for i in range(math.floor(y0 / self.CELL), math.floor(y1 / self.CELL) + 1):
+                for k in range(math.floor(z0 / self.CELL), math.floor(z1 / self.CELL) + 1):
+                    self.buckets.setdefault((i, k), []).append(tri)
+
+    def contains(self, pt):
+        if any(pt[k] < self.lo[k] or pt[k] > self.hi[k] for k in range(3)):
+            return False
+        key = (math.floor(pt[1] / self.CELL), math.floor(pt[2] / self.CELL))
+        return inside(pt, self.buckets.get(key, ()))
+
+
 def sample(pieces, box, n, seed, near=None):
     """Random points in two pieces, and (within `near` of the upright through
     the origin, if given) in none."""
     random.seed(seed)
+    solids = [Solid(tr) for tr in pieces]
     both = gaps = 0
     for _ in range(n):
         pt = (random.uniform(-box[0], box[0]), random.uniform(-box[1], box[1]), random.uniform(0, H))
-        k = sum(inside(pt, tr) for tr in pieces)
+        k = sum(s.contains(pt) for s in solids)
         both += k > 1
         if near is None or math.hypot(pt[0], pt[1]) < near:
             gaps += k == 0
@@ -256,8 +412,10 @@ def main():
 
     # a layer: groups of four, some turned over, round a middle group
     group = [f, moved(f, turn_upright), g, moved(g, turn_upright)]
-    assert shared(group[0], group[2]) == 3 and shared(group[0], group[1]) == 1
-    assert shared(group[2], group[3]) == 1
+    # triangles in a non-planar face, and in a scutoid triangle (cut into strips)
+    face, tri = 2 * ACROSS * UP, 2 + 4 * (UP // 2 - 1)
+    assert shared(group[0], group[2]) == face and shared(group[0], group[1]) == tri
+    assert shared(group[2], group[3]) == tri
     a = (DIAG, DIAG + HALF)
     steps = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
     for flipped in (set(), {0}, {0, 2, 4, 6}):
@@ -279,7 +437,7 @@ def main():
         both, gaps = sample(four, (2 * DIAG + 2 * HALF, 2 * DIAG + 2 * HALF), 30000, 2, near=HALF)
         print(f"four {name}: shared triangles {counts}, in two pieces {both}, "
               f"near the junction in none {gaps}")
-        assert counts == [1, 1, 3, 3, 3, 3]
+        assert counts == [tri, tri, face, face, face, face]
         assert both == 0 and gaps == 0
 
     for name, piece, centre in (("scutoid_5-6", f, A_CENTRE), ("scutoid_6-7", g, C_CENTRE)):
