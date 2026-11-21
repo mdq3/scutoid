@@ -2,7 +2,7 @@
 
 The scutoid. My favourite shape!
 
-A scutoid is a prism-like shape whose two ends have different numbers of sides. Part way up, one of its corners splits in two (or two merge into one), which gives it a triangular side face.
+A scutoid is a prism-like shape where part way up, one of its side edges splits in two. That gives it a triangular side face, and usually a different number of sides on each end: the scutoids below have a pentagon on one end and a hexagon on the other.
 
 Scutoids show how nature solves a fundamental 3D packing problem: bending a layer of cells into curved shapes without tearing, collapsing, or wasting energy.
 
@@ -10,12 +10,10 @@ Before scutoids were discovered in 2018, textbooks taught that epithelial cells 
 
 The scutoid was first described by good ol' Gómez-Gálvez et al. in a paper titled "Scutoids are a geometrical solution to three-dimensional packing of epithelia" published in 2018. I have included it in this repo in PDF format [here](paper/scutoid-paper.pdf). Also check out the [Scutoid Wikipedia page](https://en.wikipedia.org/wiki/Scutoid).
 
-![A group of four pulled apart: two pink 5-6 pieces and two blue 6-7 pieces, showing the triangle on the back 5-6 and the non-planar faces where the pieces meet](images/apart.png)
-
-*A group of four pulled apart: two 5-6 (pink) and two 6-7 (blue).*
+![Two 5-6 scutoids packed together, one turned over: the left one pentagon up, the right one hexagon up, each with a triangular face where they meet](images/pair-packed-5-6.png)
+*Two 5-6 scutoids packed together, one flipped over.*
 
 ![A packed layer of 5-6 and 6-7 pieces, with some groups turned over so their tops show pentagons and heptagons among the hexagons](images/packed.png)
-
 *A packed layer. Groups that are turned over (darker) show pentagons and
 heptagons on top; the rest show hexagons.*
 
@@ -101,7 +99,6 @@ two pentagons and two heptagons. Mix upright and turned groups however you
 like, for example in a checkerboard.
 
 ![A layer seen from above, with turned-over groups in a checkerboard: their pentagons and heptagons (darker) sit among the hexagons](images/layer.png)
-
 *Seen from above: the darker groups are turned over, so their tops show
 pentagons and heptagons.*
 
@@ -116,7 +113,6 @@ pentagons/heptagons on pentagons/heptagons. Going up a column, each group
 is the other way up from the one below it.
 
 ![Two layers, the upper one lifted off: each group in the upper layer is turned the other way from the group under it](images/stack.png)
-
 *Two layers, the top one lifted off. Each group in the top layer is the
 other way up from the one under it, so matching ends meet.*
 
@@ -136,7 +132,6 @@ in Wikipedia's picture of two flipped 5-6 scutoids.
 <img src="images/pair-5-6.png" width="49%" alt="Two 5-6 pieces, one turned over, slightly apart, showing the non-planar faces that fit together">
 <img src="images/four-5-6.png" width="49%" alt="Four 5-6 pieces packed together, two hexagon up and two pentagon up">
 </p>
-
 *Left: a pair, slightly apart (the darker one is turned over). Right: all
 four together.*
 
@@ -154,7 +149,6 @@ Again, any two neighbours make a flipped pair.
 <img src="images/pair-6-7.png" width="49%" alt="Two 6-7 pieces, one turned over, slightly apart, showing the non-planar faces that fit together">
 <img src="images/four-6-7.png" width="49%" alt="Four 6-7 pieces packed together, two hexagon up and two heptagon up">
 </p>
-
 *Left: a pair, slightly apart (the darker one is turned over). Right: all
 four together.*
 
