@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Scutoids</title>
+<title>Scutoid Viewer</title>
 <style>
   body { margin: 0; background: #111; color: #eee; font: 14px sans-serif; overflow: hidden; }
   #ui { position: fixed; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center; }
@@ -28,6 +28,7 @@
     <option value="stack">two layers stacked</option>
   </select>
   apart <input id="ex" type="range" min="0" max="1" step="0.01" value="0">
+  <label><input id="clear" type="checkbox"> transparent</label>
 </div>
 <div id="load">
   <div id="drop">
@@ -140,6 +141,7 @@ addEventListener('resize', () => {
 // 5-6 pink, 6-7 blue; turned-over pieces a darker shade
 const COLOURS = {'5-6': [0xe98bb5, 0xb0587f], '6-7': [0xa9c4ec, 0x6f8fc0]};
 const sel = document.getElementById('mode'), ex = document.getElementById('ex');
+const clear = document.getElementById('clear');
 let P, H, items = [];
 
 function start(pieces) {
@@ -148,11 +150,14 @@ function start(pieces) {
   for (const n in P) for (let i = 2; i < P[n].pos.length; i += 3) H = Math.max(H, P[n].pos[i]);
   sel.onchange = build;
   ex.oninput = place;
+  clear.onchange = applyLook;
   // settings from the address, e.g. viewer.html?mode=group&apart=0.8&ui=0
-  // (mode: layer, group, f4, g4; cam=x,y,z places the camera)
+  // (mode: layer, group, f4, g4; clear=1 makes them transparent; cam=x,y,z
+  // places the camera)
   const q = new URLSearchParams(location.search);
   if (q.get('mode')) sel.value = q.get('mode');
   if (q.get('apart')) ex.value = q.get('apart');
+  if (q.get('clear') === '1') clear.checked = true;
   if (q.get('ui') === '0') document.getElementById('ui').style.display = 'none';
   build();
   if (q.get('cam')) { cam.position.set(...q.get('cam').split(',').map(Number)); oc.update(); }
@@ -178,7 +183,10 @@ function add(name, move, turned, level = 0) {
   g.computeBoundingBox();
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial(
     {color: COLOURS[name][turned ? 1 : 0], side: THREE.DoubleSide}));
-  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 10), new THREE.LineBasicMaterial({color: 0x222222})));
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(g, 10), new THREE.LineBasicMaterial());
+  m.add(edges);
+  m.userData.colour = COLOURS[name][turned ? 1 : 0];
+  m.userData.edges = edges;
   const centre = new THREE.Vector3();
   g.boundingBox.getCenter(centre);
   centre.z = 0;
@@ -189,7 +197,10 @@ function add(name, move, turned, level = 0) {
 }
 
 function build() {
-  for (const m of items) { scene.remove(m); m.geometry.dispose(); }
+  for (const m of items) {
+    scene.remove(m); m.geometry.dispose(); m.material.dispose();
+    m.userData.edges.geometry.dispose(); m.userData.edges.material.dispose();
+  }
   items = [];
   const id = p => p;
   // groups of four on a lattice, checkerboard turned over; (a) is from the
@@ -236,7 +247,22 @@ function build() {
   }
   oc.target.set(0, 0, sel.value === 'stack' ? H : H / 2);
   oc.update();
+  applyLook();
   place();
+}
+
+// solid, or transparent: faces faint, every edge showing through in the
+// piece's colour
+function applyLook() {
+  const on = clear.checked;
+  for (const m of items) {
+    const mat = m.material;
+    mat.transparent = on;
+    mat.opacity = on ? 0.25 : 1;
+    mat.depthWrite = !on;
+    mat.needsUpdate = true;
+    m.userData.edges.material.color.set(on ? m.userData.colour : 0x222222);
+  }
 }
 
 function place() {
